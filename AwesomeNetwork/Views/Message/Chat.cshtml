@@ -1,0 +1,82 @@
+﻿@model AwesomeNetwork.ViewModels.Account.ChatViewModel
+@{
+    ViewData["Title"] = "Чат с " + Model.Recipient.GetFullName();
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-9">
+            <div class="card shadow-sm">
+                
+                <!-- Шапка чата -->
+                <div class="card-header bg-white d-flex align-items-center justify-content-between py-3">
+                    <div class="d-flex align-items-center">
+                        <img src="@Model.Recipient.Image" class="rounded-circle mr-3" style="width: 50px; height: 50px; object-fit: cover;" onerror="this.src='/img/default_avatar.png';" />
+                        <div>
+                            <h5 class="mb-0 font-weight-bold">@Model.Recipient.GetFullName()</h5>
+                            <small class="text-muted">@(Model.Recipient.Status ?? "Диалог")</small>
+                        </div>
+                    </div>
+                    <a asp-controller="AccountManager" asp-action="MyPage" class="btn btn-outline-secondary btn-sm">В профиль</a>
+                </div>
+
+                <!-- Область истории переписки -->
+                <div class="card-body p-4" id="chatHistory" style="height: 480px; overflow-y: auto; background-color: #f7f9fb;">
+                    @if (!Model.Messages.Any())
+                    {
+                        <div class="text-center text-muted my-5">
+                            <p>История переписки пуста. Напишите первое сообщение!</p>
+                        </div>
+                    }
+                    else
+                    {
+                        @foreach (var msg in Model.Messages)
+                        {
+                            bool isMine = msg.SenderId == Model.CurrentUser.Id;
+
+                            <div class="d-flex mb-3 @(isMine ? "justify-content-end" : "justify-content-start")">
+                                @if (!isMine)
+                                {
+                                    <img src="@Model.Recipient.Image" class="rounded-circle mr-2 align-self-end" style="width: 35px; height: 35px; object-fit: cover;" onerror="this.src='/img/default_avatar.png';" />
+                                }
+
+                                <div class="p-3 rounded shadow-sm" style="max-width: 70%; background-color: @(isMine ? "#007bff" : "#ffffff"); color: @(isMine ? "#ffffff" : "#212529"); border-radius: 15px;">
+                                    <p class="mb-1" style="white-space: pre-wrap; word-break: break-word;">@msg.Text</p>
+                                    <div class="text-right small" style="font-size: 0.75rem; opacity: 0.8;">
+                                        @msg.Timestamp.ToString("dd.MM HH:mm")
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+
+                <!-- Форма отправки сообщения -->
+                <div class="card-footer bg-white p-3">
+                    <form asp-controller="Message" asp-action="SendMessage" method="post" class="d-flex">
+                        <input type="hidden" name="recipientId" value="@Model.Recipient.Id" />
+                        
+                        <input type="text" name="text" class="form-control me-2" placeholder="Напишите сообщение..." autocomplete="off" required />
+                        
+                        <button type="submit" class="btn btn-primary px-4">
+                            Отправить
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Автоматическая прокрутка истории сообщений вниз к последнему сообщению
+        window.onload = function () {
+            var chat = document.getElementById("chatHistory");
+            if (chat) {
+                chat.scrollTop = chat.scrollHeight;
+            }
+        };
+    </script>
+}

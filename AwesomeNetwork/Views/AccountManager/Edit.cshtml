@@ -1,0 +1,62 @@
+﻿@model AwesomeNetwork.ViewModels.Account.UserEditViewModel
+@{
+    ViewData["Title"] = "Редактирование профиля";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm p-4">
+                <h4>Редактирование профиля</h4>
+                <hr />
+                <form asp-action="Edit" method="post">
+                    <input type="hidden" asp-for="UserId" />
+                    <div asp-validation-summary="All" class="text-danger"></div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="FirstName"></label>
+                        <input asp-for="FirstName" class="form-control" />
+                        <span asp-validation-for="FirstName" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="LastName"></label>
+                        <input asp-for="LastName" class="form-control" />
+                        <span asp-validation-for="LastName" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="BirthDate"></label>
+                        <input asp-for="BirthDate" class="form-control" type="date" />
+                        <span asp-validation-for="BirthDate" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="Image"></label>
+                        <input asp-for="Image" class="form-control" placeholder="Вставьте URL изображения" />
+                        <span asp-validation-for="Image" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="Status"></label>
+                        <input asp-for="Status" class="form-control" />
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="About"></label>
+                        <textarea asp-for="About" class="form-control" rows="3"></textarea>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="Email"></label>
+                        <input asp-for="Email" class="form-control" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                    <a asp-action="MyPage" class="btn btn-secondary">Отмена</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

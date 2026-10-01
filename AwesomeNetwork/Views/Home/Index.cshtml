@@ -1,0 +1,39 @@
+﻿@using Microsoft.AspNetCore.Identity;
+@using AwesomeNetwork.Models.Users;
+@inject SignInManager<User> SignInManager
+@inject UserManager<User> UserManager
+
+@model AwesomeNetwork.ViewModels.Account.MainViewModel
+
+@{
+    ViewData["Title"] = "Главная страница";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@if (SignInManager.IsSignedIn(User))
+{
+    <div class="text-center mt-4">
+        <h2>Привет, @User.Identity.Name!</h2>
+        <a asp-controller="AccountManager" asp-action="MyPage" class="btn btn-primary mt-2">Перейти в личный кабинет</a>
+    </div>
+}
+else
+{
+    <div class="row mt-4">
+        <div class="col-md-6 side">
+            <div class="alert alert-info center">
+                Пользуйтесь нашей самой крутой соцсетью! Регистрируйтесь всего за 2 минуты, делитесь мыслями, находите новых друзей.
+            </div>
+            <img class="main-img img-fluid" src="~/img/husky_PNG19.png" asp-append-version="true" alt="AwesomeNetwork" />
+        </div>
+
+        <div class="col-md-6 main">
+            <div class="mb-4">
+                <partial name="Login" model="Model.LoginView" />
+            </div>
+            <div>
+                <partial name="Register" model="Model.RegisterView" />
+            </div>
+        </div>
+    </div>
+}
