@@ -73,8 +73,9 @@ namespace AwesomeNetwork
 
             // Регистрация SignalR
             services.AddSignalR();
+
             // Регистрация провайдера
-            services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
+            services.AddSingleton<IUserIdProvider, AwesomeNetwork.Hubs.CustomUserIdProvider>();
 
             services.AddControllersWithViews();
             services.AddRazorPages();
@@ -110,13 +111,11 @@ namespace AwesomeNetwork
 
             app.UseEndpoints(endpoints =>
             {
-                // определение маршрутов
                 endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");
-                endpoints.MapRazorPages();
 
-                // Регистрация маршрута хаба
+                // Маршрут для SignalR
                 endpoints.MapHub<AwesomeNetwork.Hubs.ChatHub>("/chatHub");
             });
         }

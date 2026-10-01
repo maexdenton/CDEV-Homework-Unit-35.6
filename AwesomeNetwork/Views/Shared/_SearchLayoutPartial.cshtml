@@ -1,6 +1,31 @@
-﻿<div class="search-container">
-    <form asp-area="" asp-controller="Home" asp-action="Privacy">
-        <i class="fa fa-search"></i>
-        <input type="text" placeholder="Поиск" name="search">
-    </form>
-</div>
+﻿@using Microsoft.AspNetCore.Identity
+@using AwesomeNetwork.Models.Users
+@inject SignInManager<User> SignInManager
+
+@if (SignInManager.IsSignedIn(User))
+{
+    <div class="d-flex align-items-center ml-auto ms-auto">
+        <!-- 1. Контрол поиска пользователей -->
+        <form asp-controller="AccountManager" asp-action="Search" method="get" class="d-flex mr-2 me-2 my-0">
+            <div class="input-group input-group-sm">
+                <input type="text" 
+                       name="search" 
+                       value="@Context.Request.Query["search"]" 
+                       class="form-control" 
+                       placeholder="Поиск людей..." 
+                       aria-label="Поиск" 
+                       style="min-width: 180px;" />
+                <button class="btn btn-primary btn-sm" type="submit">
+                    <i class="fa fa-search"></i> Найти
+                </button>
+            </div>
+        </form>
+
+        <!-- 2. Кнопка «Выход» СРАЗУ ПОСЛЕ поиска -->
+        <form asp-controller="AccountManager" asp-action="Logout" method="post" class="d-inline my-0 p-0">
+            <button type="submit" class="btn btn-sm btn-outline-danger">
+                Выход
+            </button>
+        </form>
+    </div>
+}

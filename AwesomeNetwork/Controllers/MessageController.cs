@@ -31,7 +31,6 @@ namespace AwesomeNetwork.Controllers
             _hubContext = hubContext;
         }
 
-        // GET: Открытие чата и пометка сообщений как прочитанные
         [HttpGet]
         public async Task<IActionResult> Chat(string recipientId)
         {
@@ -42,7 +41,7 @@ namespace AwesomeNetwork.Controllers
 
             if (recipient == null || currentUser == null) return NotFound();
 
-            // Помечаем все входящие сообщения от этого пользователя как прочитанные
+            // Помечаем все входящие сообщения от собеседника как прочитанные
             var unreadMessages = await _context.Messages
                 .Where(m => m.SenderId == recipientId && m.RecipientId == currentUser.Id && !m.IsRead)
                 .ToListAsync();
@@ -71,7 +70,6 @@ namespace AwesomeNetwork.Controllers
             return View(model);
         }
 
-        // POST: Отправка сообщения и отправка уведомления через SignalR
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SendMessage(string recipientId, string text)
@@ -93,7 +91,7 @@ namespace AwesomeNetwork.Controllers
                 _context.Messages.Add(message);
                 await _context.SaveChangesAsync();
 
-                // Отправляем сигнал получателю в реальном времени
+                // Мгновенно шлем уведомление получателю в SignalR
                 await _hubContext.Clients.User(recipientId).SendAsync(
                     "ReceiveNotification",
                     currentUser.GetFullName(),

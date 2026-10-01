@@ -12,12 +12,15 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
 <body class="background-main">
-    <header class="border-bottom header background-white">
-        <div class="container">
-            <div class="topnav">
-                <a asp-area="" asp-controller="Home" asp-action="Index">SocialNetwork</a>
-                <partial name="_SearchLayoutPartial" />
-            </div>
+    <header class="border-bottom header background-white shadow-sm py-2">
+        <div class="container d-flex justify-content-between align-items-center">
+            <!-- Логотип / Ссылка на главную -->
+            <a class="navbar-brand font-weight-bold text-dark m-0" asp-area="" asp-controller="Home" asp-action="Index">
+                SocialNetwork
+            </a>
+
+            <!-- Поиск + Кнопка Выход -->
+            <partial name="_SearchLayoutPartial" />
         </div>
     </header>
 
@@ -33,77 +36,67 @@
         </div>
     </footer>
 
-    <!-- Контейнер для всплывающих уведомлений (Toast) в правом нижнем углу -->
-    <div aria-live="polite" aria-atomic="true" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;">
-        <div id="toastNotification" class="toast hide shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" data-delay="6000" style="min-width: 300px; background-color: #fff; border-left: 5px solid #007bff; border-radius: 8px;">
-            <div class="toast-header bg-white">
-                <img id="toastAvatar" src="/img/default_avatar.png" class="rounded-circle mr-2 me-2" style="width: 25px; height: 25px; object-fit: cover;" onerror="this.src='/img/default_avatar.png';">
-                <strong class="mr-auto me-auto text-primary" id="toastSender">Новое сообщение</strong>
-                <small class="text-muted">только что</small>
-                <button type="button" class="ml-2 ms-2 mb-1 close btn-close" data-dismiss="toast" data-bs-dismiss="toast" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+    <!-- Универсальный контейнер всплывающего окна уведомлений -->
+    <div id="toastNotification" style="display: none; position: fixed; bottom: 25px; right: 25px; z-index: 999999; min-width: 320px; max-width: 380px; background: #ffffff; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); border-left: 6px solid #007bff; overflow: hidden; font-family: sans-serif;">
+        <div style="padding: 10px 15px; background: #f8f9fa; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center;">
+                <img id="toastAvatar" src="/img/default_avatar.png" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; margin-right: 8px;">
+                <strong id="toastSender" style="color: #007bff; font-size: 14px;">Новое сообщение</strong>
             </div>
-            <div class="toast-body">
-                <p id="toastMessageText" class="mb-2 text-dark"></p>
-                <a id="toastChatLink" href="#" class="btn btn-sm btn-primary py-1 px-3">Ответить</a>
-            </div>
+            <button type="button" onclick="document.getElementById('toastNotification').style.display='none';" style="background: none; border: none; font-size: 18px; cursor: pointer; color: #888;">&times;</button>
+        </div>
+        <div style="padding: 15px;">
+            <p id="toastMessageText" style="margin: 0 0 12px 0; color: #333; font-size: 14px; word-break: break-word;"></p>
+            <a id="toastChatLink" href="#" style="display: inline-block; background: #007bff; color: #fff; padding: 6px 14px; border-radius: 5px; text-decoration: none; font-size: 13px;">Перейти в диалог</a>
         </div>
     </div>
 
-    <!-- Базовые библиотеки скриптов -->
+    <!-- Библиотеки -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
-        <!-- Библиотека SignalR -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
 
     @if (User.Identity.IsAuthenticated)
     {
         <script>
-            // 1. Создаем подключение
+            // Подключение к SignalR
             const hubConnection = new signalR.HubConnectionBuilder()
                 .withUrl("/chatHub")
                 .withAutomaticReconnect()
                 .build();
 
-            // 2. Обработчик входящего сообщения
             hubConnection.on("ReceiveNotification", function (senderName, messageText, senderId, senderAvatar) {
-                console.log("Получено push-уведомление от:", senderName, messageText);
+                console.log("Входящее сообщение от:", senderName, messageText);
 
-                // Если пользователь уже в чате с отправителем, просто обновляем страницу
+                // Если мы уже открыли чат с этим отправителем — просто перезагружаем для показа сообщения
                 if (window.location.href.indexOf("recipientId=" + senderId) !== -1) {
                     window.location.reload();
                     return;
                 }
 
-                // Заполняем данные
+                // Заполняем всплывающее окно
                 document.getElementById("toastSender").innerText = senderName;
-                document.getElementById("toastMessageText").innerText = messageText.length > 50 ? messageText.substring(0, 50) + "..." : messageText;
+                document.getElementById("toastMessageText").innerText = messageText.length > 60 ? messageText.substring(0, 60) + "..." : messageText;
                 document.getElementById("toastAvatar").src = senderAvatar || "/img/default_avatar.png";
                 document.getElementById("toastChatLink").href = "/Message/Chat?recipientId=" + senderId;
 
-                // Универсальный показ уведомления (для Bootstrap 4 и Bootstrap 5)
-                const toastEl = document.getElementById('toastNotification');
-                
-                try {
-                    // Способ для Bootstrap 5
-                    const bsToast = new bootstrap.Toast(toastEl, { delay: 6000 });
-                    bsToast.show();
-                } catch (e) {
-                    // Запасной способ для Bootstrap 4 (jQuery)
-                    $('#toastNotification').toast({ delay: 6000 }).toast('show');
-                }
+                // Показываем плашку
+                const toast = document.getElementById("toastNotification");
+                toast.style.display = "block";
+
+                // Автоматически скрыть через 7 секунд
+                setTimeout(() => {
+                    toast.style.display = "none";
+                }, 7000);
             });
 
-            // 3. Запуск соединения
             hubConnection.start()
                 .then(() => console.log("✓ SignalR успешно подключен!"))
                 .catch(err => console.error("✗ Ошибка подключения SignalR:", err.toString()));
         </script>
     }
 
-    <!-- Пользовательские скрипты из представлений (ТОЛЬКО ОДИН РАЗ В САМОМ КОНЦЕ) -->
     @RenderSection("Scripts", required: false)
 </body>
 </html>

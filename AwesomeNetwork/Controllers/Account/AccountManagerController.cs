@@ -38,12 +38,66 @@ namespace AwesomeNetwork.Controllers
         public async Task<IActionResult> MyPage()
         {
             var user = await _userManager.GetUserAsync(User);
-            if (user == null) return RedirectToAction("Login", "Account");
+            if (user == null) return RedirectToAction("Index", "Home");
+
+            // Кого добавил я (Мои друзья)
+            var myFriendIds = await _context.Friends
+                .Where(f => f.UserId == user.Id)
+                .Select(f => f.CurrentFriendId)
+                .ToListAsync();
+
+            var friends = await _context.Users
+                .Where(u => myFriendIds.Contains(u.Id))
+                .ToListAsync();
+
+            // Кто добавил меня, но я их еще не добавил взаимно (Подписчики)
+            var followerIds = await _context.Friends
+                .Where(f => f.CurrentFriendId == user.Id && !myFriendIds.Contains(f.UserId))
+                .Select(f => f.UserId)
+                .ToListAsync();
+
+            var followers = await _context.Users
+                .Where(u => followerIds.Contains(u.Id))
+                .ToListAsync();
+
+            // Все сообщения, где я являюсь отправителем или получателем
+            var allMyMessages = await _context.Messages
+                .Include(m => m.Sender)
+                .Include(m => m.Recipient)
+                .Where(m => m.SenderId == user.Id || m.RecipientId == user.Id)
+                .OrderByDescending(m => m.Timestamp)
+                .ToListAsync();
+
+            // Находим уникальных собеседников
+            var interlocutorIds = allMyMessages
+                .Select(m => m.SenderId == user.Id ? m.RecipientId : m.SenderId)
+                .Distinct()
+                .ToList();
+
+            var interlocutors = await _context.Users
+                .Where(u => interlocutorIds.Contains(u.Id))
+                .ToDictionaryAsync(u => u.Id);
+
+            var conversations = interlocutorIds
+                .Where(id => interlocutors.ContainsKey(id))
+                .Select(id =>
+                {
+                    var interlocutor = interlocutors[id];
+                    var dialogMsgs = allMyMessages.Where(m => m.SenderId == id || m.RecipientId == id).ToList();
+                    return new ConversationItemViewModel
+                    {
+                        Interlocutor = interlocutor,
+                        LastMessage = dialogMsgs.FirstOrDefault(),
+                        UnreadCount = dialogMsgs.Count(m => m.SenderId == id && m.RecipientId == user.Id && !m.IsRead)
+                    };
+                }).ToList();
 
             var model = new UserViewModel
             {
                 User = user,
-                Friends = await GetUserFriendsAsync(user)
+                Friends = friends,
+                Followers = followers,
+                Conversations = conversations
             };
 
             return View(model);
@@ -162,19 +216,26 @@ namespace AwesomeNetwork.Controllers
         public async Task<IActionResult> Search(string search)
         {
             var currentUser = await _userManager.GetUserAsync(User);
-            var currentFriends = await _context.Friends
+            if (currentUser == null) return RedirectToAction("Index", "Home");
+
+            // Получаем ID друзей текущего пользователя
+            var myFriendIds = await _context.Friends
                 .Where(f => f.UserId == currentUser.Id)
                 .Select(f => f.CurrentFriendId)
                 .ToListAsync();
 
+            // Исключаем текущего пользователя из выдачи
             var query = _context.Users.Where(u => u.Id != currentUser.Id);
 
-            if (!string.IsNullOrEmpty(search))
+            // Если введен поисковый запрос — фильтруем по имени, фамилии или email
+            if (!string.IsNullOrWhiteSpace(search))
             {
-                search = search.ToLower();
+                var term = search.Trim().ToLower();
                 query = query.Where(u =>
-                    u.FirstName.ToLower().Contains(search) ||
-                    u.LastName.ToLower().Contains(search));
+                    (u.FirstName != null && u.FirstName.ToLower().Contains(term)) ||
+                    (u.LastName != null && u.LastName.ToLower().Contains(term)) ||
+                    (u.Email != null && u.Email.ToLower().Contains(term))
+                );
             }
 
             var users = await query.ToListAsync();
@@ -184,7 +245,7 @@ namespace AwesomeNetwork.Controllers
                 UserList = users.Select(u => new UserWithFriendExt
                 {
                     User = u,
-                    IsFriendWithCurrent = currentFriends.Contains(u.Id)
+                    IsFriendWithCurrent = myFriendIds.Contains(u.Id)
                 }).ToList()
             };
 

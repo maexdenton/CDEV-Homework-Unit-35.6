@@ -30,7 +30,7 @@ namespace AwesomeNetwork
                 try
                 {
                     var context = services.GetRequiredService<ApplicationDbContext>();
-                    // Метод Migrate() создает БД, если её нет, и накатывает все существующие миграции
+                    // Метод Migrate() создает БД, если ее нет, и накатывает все существующие миграции
                     context.Database.Migrate();
                 }
                 catch (Exception ex)

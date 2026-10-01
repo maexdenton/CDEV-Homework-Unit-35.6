@@ -35,7 +35,7 @@
                 <option value="">@Model.Month</option>
             </select>
 
-            <span asp-validation-for="Month" class="text-danger"></span> `1
+            <span asp-validation-for="Month" class="text-danger"></span>
 
             <select asp-for="Year" class="form-control date_control"  ID="ddlYear" 
                     asp-items="Enumerable.Range(DateTime.Now.AddYears(-100).Year, DateTime.Now.AddYears(-14).Year - DateTime.Now.AddYears(-100).Year).Reverse().Select(x=> new SelectListItem(x.ToString(), x.ToString()))"

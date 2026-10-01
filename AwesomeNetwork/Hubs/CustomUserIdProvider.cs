@@ -1,5 +1,5 @@
-﻿using System.Security.Claims;
-using Microsoft.AspNetCore.SignalR;
+﻿using Microsoft.AspNetCore.SignalR;
+using System.Security.Claims;
 
 namespace AwesomeNetwork.Hubs
 {
@@ -7,8 +7,9 @@ namespace AwesomeNetwork.Hubs
     {
         public virtual string GetUserId(HubConnectionContext connection)
         {
-            // Берем Id текущего пользователя из Claim-ов авторизации
-            return connection.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            // Извлекаем Id текущего авторизованного пользователя
+            return connection.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                   ?? connection.User?.FindFirst("sub")?.Value;
         }
     }
 }
